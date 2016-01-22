@@ -25,4 +25,4 @@ Read the notes in the script
 
 
 !!!!Disclaimer!!!
-This script has not been worked on in a while. If it does not work I'm sorry I cannot support it.  If it is helpful to some then that is awesome!
+This script has not been worked on in a while. If it does not work I'm sorry I cannot support it. Though there probably has been much changes on the distributors end so it might work with a little editing. This script will not make product configurations either.  Example: If you have 1 outfit in 2 different colors it will make 2 products. It will not make 1 product with 2 options.  If it is helpful to some then that is awesome!
