@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+	<body>
+		<?php
+			require 'connect.php';
+		set_time_limit(0);
+			
+		//Functions
+
+		?>
+
+		<?php
+		/* Download csv from company
+		
+		    $url  = 'http://feeds.cnv.com/95710a3965354253ff9032a9f9f2315e/Bronze/MC_nodvd-B01.csv';
+		    $path = 'MC_nodvd.csv';
+		 	echo "Downloading $url"."</br>";
+		    $fp = fopen($path, 'w');
+		 
+		    $ch = curl_init($url);
+		    curl_setopt($ch, CURLOPT_FILE, $fp);
+		 
+		    $data = curl_exec($ch);
+		 
+		    curl_close($ch);
+		    fclose($fp);
+		
+		*/
+		?>
+
+		
+		<?php
+		
+		//Load csv to database
+		
+			$sql = "LOAD DATA LOCAL INFILE 'MC_nodvd.csv' INTO TABLE importcsv FIELDS TERMINATED BY ',' ENCLOSED BY '\"' IGNORE 1 LINES";
+			$db->query($sql) or die($db->error);
+			
+		
+		?>
+
+		<?php
+		
+			//import data to magento_import_tmp
+		$import= "INSERT INTO magento_import_tmp			(sku,_store,_attribute_set,_type,_category,_product_websites,color,cost,country_of_manufacture,created_at,custom_design_from,custom_design_to,description,enable_googlecheckout,gallery,has_options,image,image_label,manufacturer,media_gallery,meta_description,meta_keyword,meta_title,minimal_price,msrp,msrp_display_actual_price_type,msrp_enabled,name,news_from_date,news_to_date,page_layout,price,required_options,short_description,small_image,small_image_label,special_from_date,special_price,special_to_date,status,tax_status,tax_class_id,thumbnail,thumbnail_label,updated_at,url_key,url_path,visibility,weight,qty,min_qty,use_config_min_qty,is_qty_decimal,backorders,use_config_backorders,min_sale_qty,use_config_min_sale_qty,max_sale_qty,use_config_max_sale_qty,is_in_stock,notify_stock_qty,use_config_notify_stock_qty,manage_stock,use_config_manage_stock,stock_status_changed_auto,use_config_qty_increments,qty_increments,use_config_enable_qty_inc,enable_qty_increments,is_decimal_divided,_links_related_sku,_links_related_position ,_links_crosssell_sku ,_links_crosssell_position ,_links_upsell_sku ,_links_upsell_position ,_associated_sku ,_associated_default_qty ,_associated_position ,_tier_price_website ,_tier_price_customer_group ,_tier_price_qty ,_tier_price_price ,_media_attribute_id ,_media_image ,_media_label,_media_position,_media_is_disabled 
+			)
+			SELECT Product_Number, 'default', 'Default', 'simple',Category_3, 'base',NULL,Wholesale_Price,NULL,Date_Added,NULL,NULL,Long_Description,0,NULL,0,NULL,NULL,Manufacturer,NULL,NULL,NULL,Product_Name,NULL,Suggested_Retail_Price, 'Use config', 'Yes',Product_Name,NULL,NULL,NULL,Suggested_Retail_Price,0,Product_Name,NULL,NULL,NULL,NULL,NULL,1,1,4,NULL,NULL,NULL,NULL,NULL,4,Weight,1,0,1,0,0,0,0,1,0,1,1,NULL,1,0,1,0,1,0,1,0,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,88,NULL,NULL,1,0
+			FROM importcsv WHERE `Category_1` = \"Sexy Wear\"";
+			$db->query($import);
+
+		?>
+	
+		<?php
+		/*
+		//get image pack
+		    $url  = 'http://feeds.cnv.com/95710a3965354253ff9032a9f9f2315e/zipfiles/MC.zip';
+		    $path = 'MC.zip';
+		 	echo "Downloading $url"."</br>";
+		    $fp = fopen($path, 'w');
+		 
+		    $ch = curl_init($url);
+		    curl_setopt($ch, CURLOPT_FILE, $fp);
+		 
+		    $data = curl_exec($ch);
+		 
+		    curl_close($ch);
+		    fclose($fp);
+		  */  
+		  
+	
+	//extract images
+	/*
+	//$result = mysql_query("SELECT importcsv.Image_1,magento_import_tmp.id,magento_import_tmp._media_image,importcsv.Product_Number,magento_import_tmp.sku from importcsv,magento_import_tmp where importcsv.Product_Number = magento_import_tmp.sku");
+	$result = mysql_query("SELECT magento_import_tmp.id, importcsv.Image_1 from importcsv,magento_import_tmp where importcsv.Product_Number = magento_import_tmp.sku");
+	
+	while ($row = mysql_fetch_array($result)){
+		//echo $row['id'], " ". $row['sku'], " ". $row['Image_1']."</br>";
+		//echo $row['Image_1']. "</br> ";
+		//echo $row['sku'];
+		
+		//remove url from images
+		foreach (array_unique($row) as $rowreg)
+		{
+		
+			$filename = preg_replace("/\A(..){14}\//",$replace,$rowreg);
+	 		echo $filename. "</br>"; //should report full path for unzipping
+			if (passthru("unzip -jo MC.zip $filename -d images/"))
+				{
+					echo "Success! </br>";
+				}
+				else
+				{
+				
+				echo  " </br> ERROR!  File Not Found";
+				//	passthru("unzip -jo ELD.zip $filename -d images/"); //this should also unzip images
+				}
+				
+	
+				
+			//echo "$filename" . "</br>";
+			$imagepath = $filename;			
+			$imagename = basename($imagepath);
+			echo "$imagename" . "</br>"; //imagename.jpg		
+			$imageinsert = "UPDATE magento_import_tmp SET _media_image='/$imagename' WHERE id=$row[id]";
+			$imagethumb = "UPDATE magento_import_tmp SET thumbnail='/$imagename' WHERE id=$row[id]";	
+			$imageimage = "UPDATE magento_import_tmp SET image='/$imagename' WHERE id=$row[id]";	
+			$imagesmall = "UPDATE magento_import_tmp SET small_image='/$imagename' WHERE id=$row[id]";	
+			mysql_query($imageinsert) or die(mysql_error());
+			mysql_query($imagethumb) or die(mysql_error());
+			mysql_query($imageimage) or die(mysql_error());
+			mysql_query($imagesmall) or die(mysql_error());
+
+			
+			
+		}
+
+			
+
+	}
+
+	*/
+		?>
+
+
+</body>
+</html>
