@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<php
+	/*
+	THIS SCRIPT IS USED TO DOWNLOAD THE OUT OF STOCK.CSV FROM CNV.COM AND CHECK AND UPDATE PRODUCTS THAT ARE OUT OF STOCK.
+	*/
+?>
+<html>
+
+	<body>
+		<?php
+		set_time_limit(0);
+			$link = mysql_connect('localhost', 'dbusername', 'dbpassword');
+			
+			if (!$link)
+			{
+				die('Could not connect: ' . mysql_error());
+			}
+			//echo 'Connected successfully'."</br>";
+			//echo getcwd() . "\n";
+			
+			mysql_select_db('adult_lustinlace');
+			mysql_select_db('adult_lustcsv');
+			
+		//Functions
+		
+		//magento api connector
+		$proxy = new SoapClient('http://lustinlace.com/magento/api/v2_soap/?wsdl');
+		
+		$sessionId = $proxy->login('products', 'products');
+
+		
+		?>
+
+		<?php
+		
+		
+		   //CHANGE THIS URL 
+		   $url  = 'http://feeds.cnv.com/95710a3965354253ff9032a9f9f2315e/stock_info/InStock.csv';
+		  //CHANGE THIS PATH  
+		  $path = 'instock.csv';
+		 	echo "Downloading $url"."</br>";
+		    $fp = fopen($path, 'w');
+		 
+		    $ch = curl_init($url);
+		    curl_setopt($ch, CURLOPT_FILE, $fp);
+		 
+		    $data = curl_exec($ch);
+		 
+		    curl_close($ch);
+		    fclose($fp);
+		
+		
+		?>
+
+
+		<?php //Load oos.csv file into an array
+			
+			$csvarray = array();
+			if (($handle = fopen("instock.csv", "r")) !== FALSE) 
+			{
+			
+				while (($data = fgetcsv($handle, 256, "\n", "\"")) !== FALSE)
+				{
+					$num = count($data);
+					
+        				
+       					for ($c=0; $c < $num; $c++)
+       					{
+          					$csvarray[] = $data[$c];
+          				}
+				
+				}
+
+			}
+			
+			fclose($handle); // close file
+			
+			//Select all skus from magento import csv input into an array to make calls to magento database to check for OOS items
+			$result = mysql_query("SELECT sku FROM magento_import_tmp");
+			$count=0;
+			while ($row = mysql_fetch_array($result))
+			{
+				
+				foreach (array_unique($row) as $rowreg)
+				{
+					if (in_array($rowreg,$csvarray))
+					{
+						echo "Found sku = ".$rowreg;
+						//magento api call to check sku against instock.csv
+						$stock = $proxy->catalogProductInfo($sessionId,$rowreg);
+						echo " Is back for the attack as is now in stock\n"; 
+						$stock = $proxy->catalogInventoryStockItemUpdate($sessionId,$rowreg,array('is_in_stock' => 1));
+						echo $count ." items are back in stock!\n";
+						$count++;
+					
+					}
+	
+				}
+			
+			}
+			echo $count;
+		?>
+		
+
+
+		<?php
